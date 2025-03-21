@@ -5,156 +5,83 @@ from esports.models import User, Post
 from esports.users.forms import (RegistrationForm, LoginForm, UpdateAccountForm,
                                    RequestResetForm, ResetPasswordForm)
 from esports.users.utils import save_picture, send_reset_email
-import duo_client
-import duo_web
+from esports.users.duo_utils import send_duo_push_async
 
 users = Blueprint('users', __name__)
 
 @users.route("/login", methods=['GET', 'POST'])
 def login():
-    """Login route with Duo authentication."""
     if current_user.is_authenticated:
         return redirect(url_for('main.home'))
 
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
-        
         if user and bcrypt.check_password_hash(user.password, form.password.data):
-            # Store the username in the session for Duo verification step
-            session['duo_user'] = user.username
-            session['remember_me'] = form.remember.data  # Store the "remember me" option
-            return redirect(url_for('users.duo_auth'))  # Redirect to Duo authentication
+            txid, message = send_duo_push_async(
+                username=user.username,
+                ikey=current_app.config['DUO_IKEY'],
+                skey=current_app.config['DUO_SKEY'],
+                host=current_app.config['DUO_HOST']
+            )
 
-        else:
-            flash('Login Unsuccessful. Please check email and password', 'danger')
+            if txid:
+                session['duo_txid'] = txid
+                session['duo_user'] = user.username
+                session['remember_me'] = form.remember.data
+                return redirect(url_for('users.duo_waiting'))
+            else:
+                flash(f'Duo push failed: {message}', 'danger')
+                return redirect(url_for('users.login'))
 
+        flash('Login Unsuccessful. Please check email and password.', 'danger')
     return render_template('login.html', title='Login', form=form)
 
+@users.route("/duo-waiting")
+def duo_waiting():
+    if 'duo_txid' not in session or 'duo_user' not in session:
+        return redirect(url_for('users.login'))
+    return render_template('duo_waiting.html')
 
-@users.route("/duo-auth", methods=['GET', 'POST'])
-def duo_auth():
-    """Displays the Duo authentication page."""
+@users.route("/duo-status")
+def duo_status():
+    import duo_client
+    import time
+
+    txid = session.get('duo_txid')
     username = session.get('duo_user')
+    if not txid or not username:
+        return {'status': 'error', 'message': 'Missing session data'}, 400
 
-    if not username:
-        print("❌ ERROR: Session variable `duo_user` is missing! Redirecting to login.")
-        return redirect(url_for('users.login'))
+    try:
+        auth_client = duo_client.Auth(
+            ikey=current_app.config['DUO_IKEY'],
+            skey=current_app.config['DUO_SKEY'],
+            host=current_app.config['DUO_HOST']
+        )
 
-    # Ensure `duo_host` is set
-    duo_host = current_app.config.get("DUO_HOST")
-    if not duo_host:
-        raise ValueError("❌ ERROR: `DUO_HOST` is missing in Flask configuration.")
-    
-    # 🔍 Debug: Check if DUO_AKEY is correctly loaded
-    duo_akey = current_app.config.get("DUO_AKEY")
-    if not duo_akey:
-        raise ValueError("❌ ERROR: `DUO_AKEY` is missing or not loaded!")
-    print("🔍 Debug: DUO_AKEY Length:", len(duo_akey))  # Should be 80 characters
+        status = auth_client.auth_status(txid)
+        print("🔁 Duo Poll:", status)
 
-    # Generate Duo sign request
-    sig_request = duo_web.sign_request(
-        current_app.config['DUO_IKEY'],
-        current_app.config['DUO_SKEY'],
-        current_app.config['DUO_AKEY'],
-        username
-    )
+        if status.get('waiting', True):
+            return {'status': 'waiting'}
 
-    # Debug: Log duo_host and sig_request
-    print("🔍 Debug: sig_request:", sig_request)
-    print("🔍 Debug: Duo Host:", duo_host)
+        if status.get('success'):
+            # Log the user in
+            user = User.query.filter_by(username=username).first()
+            if user:
+                login_user(user, remember=session.get('remember_me'))
+                # Clean up session
+                session.pop('duo_txid', None)
+                session.pop('duo_user', None)
+                session.pop('remember_me', None)
+                return {'status': 'success'}
 
-    return render_template('duo_auth.html', sig_request=sig_request, duo_host=duo_host)
+        return {'status': 'denied', 'message': status.get('status_msg', 'Denied')}
 
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}, 500
 
-@users.route("/duo-auth-verify", methods=['GET', 'POST'])
-def duo_auth_verify():
-    """Verifies Duo response and completes the login."""
-    auth_sig = request.form.get('sig_response')
-    username = session.get('duo_user')
-
-    print("🔍 Debug: Received Duo Auth Response:", auth_sig)
-    print("🔍 Debug: Username from Session:", username)
-
-    if not auth_sig or not username:
-        print("❌ No auth signature or username. Redirecting to login.")
-        flash('Duo authentication failed: No response or session expired.', 'danger')
-        return redirect(url_for('users.login'))
-
-    # Verify the Duo response
-    verified_user = duo_web.verify_response(
-        current_app.config['DUO_IKEY'],
-        current_app.config['DUO_SKEY'],
-        current_app.config['DUO_AKEY'],
-        auth_sig
-    )
-
-    print("✅ Duo Verified User:", verified_user)
-
-    if not verified_user:
-        print("❌ Duo authentication failed. Redirecting to login.")
-        flash('Duo authentication failed: Invalid response.', 'danger')
-        return redirect(url_for('users.login'))
-
-    if verified_user != username:
-        print(f"❌ Mismatch: Expected {username}, but got {verified_user}")
-        flash('Duo authentication failed: Username mismatch.', 'danger')
-        return redirect(url_for('users.login'))
-
-    # If verification succeeds, log in the user
-    user = User.query.filter_by(username=username).first()
-    if user:
-        print(f"✅ Logging in user: {user.username}")
-        login_user(user, remember=session.get('remember_me'))
-
-        # 🚀 Fix: Clear session variables before redirecting
-        session.pop('duo_user', None)
-        session.pop('remember_me', None)
-        session.modified = True  # Ensure session updates are committed
-
-        next_page = session.pop('next', None)
-        print("🔀 Redirecting to:", next_page if next_page else url_for('main.home'))
-
-        flash('Login successful!', 'success')
-        return redirect(next_page if next_page else url_for('main.home'))
-
-    print("❌ User not found in database. Redirecting to login.")
-    flash('Duo authentication successful, but user not found.', 'danger')
-    return redirect(url_for('users.login'))
-
-
-
-'''
-@users.route("/register", methods=['GET', 'POST'])
-def register():
-    if current_user.is_authenticated:
-        return redirect(url_for('main.home'))
-    form = RegistrationForm()
-    if form.validate_on_submit():
-        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        user = User(username=form.username.data, email=form.email.data, password=hashed_password)
-        db.session.add(user)
-        db.session.commit()
-        flash('Your account has been created! You are now able to log in', 'success')
-        return redirect(url_for('users.login'))
-    return render_template('register.html', title='Register', form=form)
-
-
-@users.route("/login", methods=['GET', 'POST'])
-def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('main.home'))
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
-        if user and bcrypt.check_password_hash(user.password, form.password.data):
-            login_user(user, remember=form.remember.data)
-            next_page = request.args.get('next')
-            return redirect(next_page) if next_page else redirect(url_for('main.home'))
-        else:
-            flash('Login Unsuccessful. Please check email and password', 'danger')
-    return render_template('login.html', title='Login', form=form)
-'''
 
 @users.route("/logout")
 def logout():
