@@ -46,7 +46,6 @@ def duo_waiting():
 @users.route("/duo-status")
 def duo_status():
     import duo_client
-    import time
 
     txid = session.get('duo_txid')
     username = session.get('duo_user')
