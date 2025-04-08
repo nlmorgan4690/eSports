@@ -1,0 +1,21 @@
+# Ignore Python virtual environment
+.venv/
+esports_env
+venv_sports
+
+# Ignore compiled Python files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore environment variables
+.env
+
+# Ignore cache and logs
+*.log
+instance/
+migrations/
+
+esports/notes.md
+notes.md

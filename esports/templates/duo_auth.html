@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+{% block content %}
+<head>
+    <script src="https://api.duosecurity.com/frame/hosted/Duo-Web-v2.min.js"></script>
+</head>
+<body>
+    <h2>Duo Authentication Required</h2>
+
+    <!-- Duo iframe -->
+    <iframe id="duo_iframe" width="100%" height="500"></iframe>
+
+    <!-- Hidden form that gets submitted automatically after Duo authentication -->
+    <form id="duo_form" method="POST" action="{{ url_for('users.duo_auth_verify') }}">
+        <input type="hidden" name="sig_response" id="sig_response">
+    </form>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            console.log("🚀 Duo Web SDK loaded, initializing...");
+    
+            if (typeof Duo === "undefined") {
+                console.error("❌ Duo Web SDK failed to load.");
+                return;
+            }
+    
+            console.log("✅ Duo Web SDK detected, initializing Duo iframe...");
+            
+            Duo.init({
+                'host': '{{ duo_host }}',
+                'sig_request': '{{ sig_request }}',
+                'iframe': "duo_iframe",
+                'disable_endpoint_health_check': true,  // 🚀 Disable health check to prevent connection issue
+                'submit_callback': function(response) {
+                    console.log("✅ Duo authentication successful, response:", response);
+                    document.getElementById("sig_response").value = response;
+                    document.getElementById("duo_form").submit();
+                }
+            });
+        });
+    </script>
+</body>
+{% endblock content %}

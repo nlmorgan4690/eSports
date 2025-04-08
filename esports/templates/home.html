@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+{% block content %}
+
+{# Outer row: g-0 removes gutters, mb-5 adds margin below, align-items-stretch makes columns attempt equal height #}
+<div class="row g-0 mb-5 align-items-stretch">
+  <div class="col-md-5 p-0"> {# Or adjust split. p-0 ensures no padding in this column. #}
+    <img src="{{ url_for('static', filename='imgs/esports_img_vert_003.jpg') }}" alt="Esports graphic"
+         class="img-fluid rounded-end w-100 h-100" style="object-fit: cover;">
+         {# img-fluid: responsive
+            rounded-end: rounds only the right corners
+            w-100 h-100 object-fit: cover : Fills the column space #}
+  </div>
+
+  {# Left Column: Text Content #}
+  <div class="col-md-7 bg-dark"> {# Or adjust split like col-md-6, col-md-8 etc. #}
+    {# Dark background div:
+        - Removed d-flex justify-content-center to align text at top.
+        - h-100 makes it stretch vertically.
+        - rounded-start rounds only the left corners.
+        - p-4 provides internal padding for the text.
+    #}
+    <div class="bg-dark text-white rounded-start p-4 shadow-sm h-75">
+      <h1 class="display-5 font-weight-bold mb-3 text-white">Welcome to DCSD Esports</h1>
+      <p class="lead">
+        Coaches. Players. Fans. This platform is your home for everything high school esports in Douglas County School District.
+        Here you will find tools for managing rosters and devices along with resources and tools.
+      </p>
+      <div class="mt-4">
+        {# Content for the div.mt-4 if any #}
+      </div>
+    </div>
+  </div>
+
+  {# Right Column: Image #}
+ 
+
+</div>
+
+{% endblock content %}

@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h1 class="mb-4">{{ player.name }}</h1>
+  <ul class="list-group mb-3">
+    <li class="list-group-item"><strong>School:</strong> {{ player.school.name }}</li>
+    <li class="list-group-item"><strong>Game:</strong> {{ player.game.name }}</li>
+    <li class="list-group-item"><strong>Team:</strong> {{ player.team.name if player.team else "Unassigned" }}</li>
+    <li class="list-group-item"><strong>Created:</strong> {{ player.date_created.strftime('%Y-%m-%d') }}</li>
+  </ul>
+  <a href="{{ url_for('players.edit_player', player_id=player.id) }}" class="btn btn-warning">Edit</a>
+  <a href="{{ url_for('players.players_dashboard') }}" class="btn btn-secondary">Back</a>
+</div>
+{% endblock %}

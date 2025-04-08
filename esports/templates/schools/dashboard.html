@@ -1,0 +1,33 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h1>School Dashboard</h1>
+  <a href="{{ url_for('schools.add_school') }}" class="btn btn-primary my-3">+ Add School</a>
+
+  {% if schools %}
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Address</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for school in schools %}
+      <tr>
+        <td><a href="{{ url_for('schools.view_school', school_id=school.id) }}">{{ school.name }}</a></td>
+        <td>{{ school.location }}</td>
+        <td>
+          <a href="{{ url_for('schools.view_school', school_id=school.id) }}" class="btn btn-sm btn-outline-info">View</a>
+          <a href="{{ url_for('schools.edit_school', school_id=school.id) }}" class="btn btn-sm btn-outline-warning">Edit</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p>No schools found.</p>
+  {% endif %}
+</div>
+{% endblock %}

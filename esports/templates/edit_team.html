@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h1 class="mb-4">Edit Team: {{ team.name }}</h1>
+  <form method="POST">
+    {{ form.hidden_tag() }}
+
+    <div class="mb-3">
+      {{ form.name.label(class="form-label") }}
+      {{ form.name(class="form-control") }}
+      {% for error in form.name.errors %}
+      <div class="text-danger">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.school.label(class="form-label") }}
+      {{ form.school(class="form-control") }}
+      {% for error in form.school.errors %}
+      <div class="text-danger">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.coach.label(class="form-label") }}
+      {{ form.coach(class="form-control") }}
+      {% for error in form.coach.errors %}
+      <div class="text-danger">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <button type="submit" class="btn btn-primary">Update Team</button>
+    <a href="{{ url_for('team.view_team', team_id=team.id) }}" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+{% endblock %}

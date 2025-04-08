@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h1 class="mb-4">Games Dashboard</h1>
+  <a href="{{ url_for('games.add_game') }}" class="btn btn-primary mb-3">+ Add Game</a>
+
+  {% if games %}
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th></th>
+        <th>Game Name</th>
+        <th>Max Team Size</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for game in games %}
+      <tr>
+        <td>
+          <div class="diamond-wrapper">
+            <img src="{{ url_for('static', filename='game_icons/' ~ game.game_icon) }}" alt="{{ game.name }} icon">
+          </div>
+        </td>        
+        <td><a href="{{ url_for('games.view_game', game_id=game.id) }}">{{ game.name }}</a></td>
+        <td>{{ game.max_team_size }}</td>
+        <td>
+          <a href="{{ url_for('games.view_game', game_id=game.id) }}" class="btn btn-sm btn-outline-info">View</a>
+          <a href="{{ url_for('games.edit_game', game_id=game.id) }}" class="btn btn-sm btn-outline-warning">Edit</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p>No games available.</p>
+  {% endif %}
+</div>
+{% endblock %}

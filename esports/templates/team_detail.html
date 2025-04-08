@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h1>{{ team.name }}</h1>
+  <p><strong>School:</strong> {{ team.school }}</p>
+  <p><strong>Coach:</strong> {{ team.coach }}</p>
+
+  <!-- Optional: Edit/Delete buttons here later -->
+  <a href="{{ url_for('team.edit_team', team_id=team.id) }}" class="btn btn-warning mt-3">Edit Team</a>
+
+  <a href="{{ url_for('team.team_dashboard') }}" class="btn btn-secondary mt-3">← Back to Dashboard</a>
+</div>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>User Dashboard</h2>
+
+<a href="{{ url_for('users.register') }}" class="btn btn-success mb-3">+ Add User</a>
+
+{% if users %}
+  <ul class="list-group">
+    {% for user in users %}
+    <li class="list-group-item">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <strong>{{ user.username }}</strong><br>
+          <small>{{ user.email or "No email" }}</small>
+          <span class="badge 
+              {% if user.role.role == 'Admin' %}badge-admin
+              {% elif user.role.role == 'Coach' %}badge-coach
+              {% else %}bg-secondary
+              {% endif %}
+            ">
+              {{ user.role.role }}
+            </span>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="#" class="btn btn-sm btn-outline-primary disabled" tabindex="-1" aria-disabled="true" title="Coming soon">View Profile</a>
+            <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal{{ user.id }}">Delete</button>
+        </div>
+      </div>
+
+      <!-- 🧩 Inline Delete Modal -->
+      <div class="modal fade" id="confirmDeleteModal{{ user.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ user.id }}" aria-hidden="true">
+        <div class="modal-dialog">
+          <form method="POST" action="{{ url_for('users.delete_user', user_id=user.id) }}">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel{{ user.id }}">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                Are you sure you want to delete <strong>{{ user.username }}</strong>?
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-danger">Delete</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+      <!-- End Modal -->
+    </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No users added yet.</p>
+{% endif %}
+{% endblock %}

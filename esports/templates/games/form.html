@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h1 class="mb-4">{{ title }}</h1>
+  <form method="POST" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    {% if game and game.game_icon %}
+    <div class="mb-3">
+      <label class="form-label">Current Icon:</label>
+      <div class="diamond-wrapper">
+        <img src="{{ url_for('static', filename='game_icons/' ~ game.game_icon) }}" alt="Game Icon">
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Game Name -->
+    <div class="mb-3">
+      {{ form.name.label(class="form-label") }}
+      {{ form.name(class="form-control", placeholder="Enter game name") }}
+      {% for error in form.name.errors %}
+      <div class="text-danger">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <!-- Max Team Size -->
+    <div class="mb-3">
+      {{ form.max_team_size.label(class="form-label") }}
+      {{ form.max_team_size(class="form-control", placeholder="e.g. 3, 5") }}
+      {% for error in form.max_team_size.errors %}
+      <div class="text-danger">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <!-- Game Icon Upload -->
+    <div class="mb-3">
+      {{ form.game_icon.label(class="form-label") }}
+      {{ form.game_icon(class="form-control") }}
+      {% for error in form.game_icon.errors %}
+      <div class="text-danger">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <!-- Submit Button -->
+    <button type="submit" class="btn btn-success">{{ form.submit.label.text }}</button>
+    <a href="{{ url_for('games.games_dashboard') }}" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+{% endblock %}
