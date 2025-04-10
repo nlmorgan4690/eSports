@@ -89,20 +89,24 @@ class Game(db.Model):
     max_team_size = db.Column(db.Integer, nullable=False)
 
     players = db.relationship('Player', backref='game', lazy=True)
-    teams = db.relationship('Team', backref='game', lazy=True)
+    player_links = db.relationship('PlayerGame', back_populates='game')
 
     def __repr__(self):
         return f"Game('{self.name}')"
 
 
+
 class Player(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
+    # username = db.Column(db.String(20), unique=True, nullable=False)
+    # password = db.Column(db.String(60), nullable=False)
     date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     school_id = db.Column(db.Integer, db.ForeignKey('school.id'), nullable=False)
-    game_id = db.Column(db.Integer, db.ForeignKey('game.id'), nullable=False)
+    game_id = db.Column(db.Integer, db.ForeignKey('game.id'), nullable=True)
     team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=True)
 
+    games = db.relationship('PlayerGame', back_populates='player')
     teams = db.relationship('PlayerTeam', backref='player', lazy=True)
 
     def __repr__(self):
@@ -117,10 +121,12 @@ class Team(db.Model):
     game_id = db.Column(db.Integer, db.ForeignKey('game.id'), nullable=False)
     coach_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
+    game = db.relationship('Game', backref='teams', lazy=True)  # ✅ add this
     players = db.relationship('PlayerTeam', backref='team', lazy=True)
 
     def __repr__(self):
         return f"Team('{self.name}')"
+
 
 
 class PlayerTeam(db.Model):
@@ -128,9 +134,21 @@ class PlayerTeam(db.Model):
     player_id = db.Column(db.Integer, db.ForeignKey('player.id'), nullable=False)
     team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
     date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
     def __repr__(self):
         return f"PlayerTeam('{self.player_id}', '{self.team_id}')"
 
+class PlayerGame(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    player_id = db.Column(db.Integer, db.ForeignKey('player.id'), nullable=False)
+    game_id = db.Column(db.Integer, db.ForeignKey('game.id'), nullable=True)
+    date_added = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    player = db.relationship('Player', back_populates='games')
+    game = db.relationship('Game', back_populates='player_links')
+
+    def __repr__(self):
+        return f"PlayerGame(player_id={self.player_id}, game_id={self.game_id})"
 
 class Device(db.Model):
     id = db.Column(db.Integer, primary_key=True)

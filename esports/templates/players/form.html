@@ -12,14 +12,6 @@
       {{ form.school.label(class="form-label") }}
       {{ form.school(class="form-select") }}
     </div>
-    <div class="mb-3">
-      {{ form.game.label(class="form-label") }}
-      {{ form.game(class="form-select") }}
-    </div>
-    <div class="mb-3">
-      {{ form.team.label(class="form-label") }}
-      {{ form.team(class="form-select") }}
-    </div>
     <button type="submit" class="btn btn-success">{{ form.submit.label.text }}</button>
     <a href="{{ url_for('players.players_dashboard') }}" class="btn btn-secondary">Cancel</a>
 

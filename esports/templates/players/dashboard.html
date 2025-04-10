@@ -20,7 +20,7 @@
       <tr>
         <td><a href="{{ url_for('players.view_player', player_id=player.id) }}">{{ player.name }}</a></td>
         <td>{{ player.school.name }}</td>
-        <td>{{ player.game.name }}</td>
+        <td>{{ player.game.name if player.game else 'Unassigned' }}</td>
         <td>{{ player.team.name if player.team else "Unassigned" }}</td>
         <td class="text-end">
           <a href="{{ url_for('players.view_player', player_id=player.id) }}" class="btn btn-sm btn-outline-info">View</a>

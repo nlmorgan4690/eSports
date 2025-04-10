@@ -1,8 +1,8 @@
 from flask import render_template, url_for, flash, session, redirect, request, Blueprint, current_app
 from flask_login import login_user, current_user, logout_user, login_required
 from esports import db, bcrypt
-from esports.models import User, Post, Role, Team, PlayerTeam, School, Game
-from esports.team.forms import (TeamForm, DeleteForm)
+from esports.models import User, Post, Role, Team, PlayerTeam, School, Game, Player
+from esports.team.forms import (TeamForm, DeleteForm, EditTeamForm)
 
 team = Blueprint('team', __name__)
 
@@ -55,31 +55,54 @@ def add_team():
 
 
 
-@team.route('/teams/<int:team_id>/edit', methods=['GET', 'POST'])
+@team.route("/teams/<int:team_id>/edit", methods=["GET", "POST"])
 @login_required
 def edit_team(team_id):
     team = Team.query.get_or_404(team_id)
-    form = TeamForm()
+    form = EditTeamForm()
+
+    # Dynamically limit coaches to users with the coach role
+    coach_role = Role.query.filter_by(role="Coach").first()
+    form.coach.choices = [(u.id, u.username) for u in User.query.filter_by(role_id=coach_role.id).all()]
+    # Load game choices
+    form.game.choices = [(g.id, g.name) for g in Game.query.order_by(Game.name).all()]
+
+
+    # Only allow players from the same school who aren't already on a team
+    eligible_players = Player.query.filter_by(school_id=team.school_id).all()
+    form.players.choices = [(p.id, p.name) for p in eligible_players]
+
+    if request.method == "GET":
+        form.name.data = team.name
+        form.coach.data = team.coach_id
+        form.game.data = team.game_id  # 👈 pre-populate game
+        form.players.data = [pt.player_id for pt in team.players]
+
 
     if form.validate_on_submit():
-        # Optional: check if the name is being changed to an existing team
-        existing = Team.query.filter(Team.name == form.name.data.strip(), Team.id != team.id).first()
-        if existing:
-            flash("Another team with that name already exists.", "danger")
-        else:
-            team.name = form.name.data.strip()
-            team.school = form.school.data.strip()
-            team.coach = form.coach.data.strip()
-            db.session.commit()
-            flash("Team updated successfully!", "success")
-            return redirect(url_for('team.view_team', team_id=team.id))
-    elif request.method == 'GET':
-        # Pre-fill form with current values
-        form.name.data = team.name
-        form.school.data = team.school
-        form.coach.data = team.coach
+        team.name = form.name.data
+        team.coach_id = form.coach.data
+        team.game_id = form.game.data  # 👈 save selected game
 
-    return render_template("edit_team.html", form=form, team=team)
+        # Clear and reset players
+        PlayerTeam.query.filter_by(team_id=team.id).delete()
+        selected_player_ids = form.players.data
+
+        # Enforce max team size
+        max_team_size = team.game.max_team_size
+        if len(selected_player_ids) > max_team_size:
+            flash(f"Cannot assign more than {max_team_size} players to this team.", "danger")
+            return redirect(url_for("team.edit_team", team_id=team.id))
+
+        for player_id in selected_player_ids:
+            db.session.add(PlayerTeam(player_id=player_id, team_id=team.id))
+
+        db.session.commit()
+        flash("Team updated successfully.", "success")
+        return redirect(url_for("team.team_dashboard"))
+
+    return render_template("teams/edit_team.html", form=form, team=team, max_team_size=team.game.max_team_size)
+
 
 @team.route('/teams/<int:team_id>/delete', methods=['POST'])
 @login_required

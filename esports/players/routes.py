@@ -18,17 +18,17 @@ def add_player():
         schools = [(s.id, s.name) for s in School.query.order_by(School.name).all()]
     form.school.choices = schools
 
-    form.game.choices = [(g.id, g.name) for g in Game.query.order_by(Game.name).all()]
+    #  form.game.choices = [(g.id, g.name) for g in Game.query.order_by(Game.name).all()]
 
     selected_school_id = form.school.data or schools[0][0]
-    form.team.choices = [(0, 'None')] + [(t.id, t.name) for t in Team.query.filter_by(school_id=selected_school_id).order_by(Team.name).all()]
+    # form.team.choices = [(0, 'None')] + [(t.id, t.name) for t in Team.query.filter_by(school_id=selected_school_id).order_by(Team.name).all()]
 
     if form.validate_on_submit():
         player = Player(
             name=form.name.data,
             school_id=form.school.data,
-            game_id=form.game.data,
-            team_id=form.team.data if form.team.data != 0 else None
+            # game_id=form.game.data,
+            # team_id=form.team.data if form.team.data != 0 else None
         )
         db.session.add(player)
         db.session.commit()
@@ -40,11 +40,13 @@ def add_player():
 @players.route('/players')
 @login_required
 def players_dashboard():
+    form = PlayerForm()
+    delete_form = DeleteForm()
     if current_user.role.role == 'Coach':
         players = Player.query.filter_by(school_id=current_user.school_id).order_by(Player.name).all()
     else:
         players = Player.query.order_by(Player.name).all()
-    return render_template('players/dashboard.html', players=players)
+    return render_template('players/dashboard.html', players=players, form=form, delete_form=delete_form)
 
 @players.route('/players/<int:player_id>')
 @login_required
@@ -77,14 +79,14 @@ def edit_player(player_id):
     else:
         form.school.choices = [(s.id, s.name) for s in School.query.order_by(School.name).all()]
 
-    form.game.choices = [(g.id, g.name) for g in Game.query.order_by(Game.name).all()]
-    form.team.choices = [(0, 'None')] + [(t.id, t.name) for t in Team.query.filter_by(school_id=player.school_id).order_by(Team.name).all()]
+    # form.game.choices = [(g.id, g.name) for g in Game.query.order_by(Game.name).all()]
+    # form.team.choices = [(0, 'None')] + [(t.id, t.name) for t in Team.query.filter_by(school_id=player.school_id).order_by(Team.name).all()]
 
     if form.validate_on_submit():
         player.name = form.name.data
         player.school_id = form.school.data
-        player.game_id = form.game.data
-        player.team_id = form.team.data if form.team.data != 0 else None
+        # player.game_id = form.game.data
+        # player.team_id = form.team.data if form.team.data != 0 else None
         db.session.commit()
         flash("Player updated successfully!", "success")
         return redirect(url_for('players.view_player', player_id=player.id))
@@ -92,8 +94,8 @@ def edit_player(player_id):
     elif request.method == 'GET':
         form.name.data = player.name
         form.school.data = player.school_id
-        form.game.data = player.game_id
-        form.team.data = player.team_id or 0
+        # form.game.data = player.game_id
+        # form.team.data = player.team_id or 0
 
     return render_template("players/form.html", form=form, delete_form=delete_form, title=f"Edit {player.name}", player=player)
 
