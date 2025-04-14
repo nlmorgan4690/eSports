@@ -18,8 +18,22 @@
 
   <h5 class="mb-2">ESports Info</h5>
     <ul class="list-group mb-4">
-      <li class="list-group-item"><strong>User Name:</strong> User name place holder</li>
-      <li class="list-group-item"><strong>Password:</strong> pass placeholder with view button</li>
+      <li class="list-group-item">
+        <strong>AD Username:</strong> {{ player.ad_username or "Pending" }}
+      </li>
+      
+      {% if current_user.role.role in ["Admin", "Coach"] %}
+        <li class="list-group-item">
+          <strong>Passphrase:</strong>
+          <div class="input-group">
+            <input id="passphraseField" type="password" class="form-control" value="{{ player.ad_passphrase }}" readonly>
+            <button class="btn btn-outline-secondary" type="button" onclick="togglePassphrase()">
+              <i id="eyeIcon" class="bi bi-eye"></i>
+            </button>
+          </div>
+        </li>
+      
+      {% endif %}
     </ul>
 
   <h5 class="mb-2">Teams</h5>
@@ -44,4 +58,19 @@
   <a href="{{ url_for('players.edit_player', player_id=player.id) }}" class="btn btn-warning">Edit</a>
   <a href="{{ url_for('players.players_dashboard') }}" class="btn btn-secondary">Back</a>
 </div>
+<script>
+  function togglePassphrase() {
+    const input = document.getElementById("passphraseField");
+    const icon = document.getElementById("eyeIcon");
+    if (input.type === "password") {
+      input.type = "text";
+      icon.classList.remove("bi-eye");
+      icon.classList.add("bi-eye-slash");
+    } else {
+      input.type = "password";
+      icon.classList.remove("bi-eye-slash");
+      icon.classList.add("bi-eye");
+    }
+  }
+</script>
 {% endblock %}

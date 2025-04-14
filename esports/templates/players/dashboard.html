@@ -2,7 +2,34 @@
 {% block content %}
 <div class="container mt-4">
   <h1 class="mb-4">Player Dashboard</h1>
-  <a href="{{ url_for('players.add_player') }}" class="btn btn-primary mb-3">+ Add Player</a>
+
+  <div class="d-flex justify-content-end align-items-center mb-4 gap-2">
+    <a href="{{ url_for('players.add_player') }}" class="btn btn-primary">
+      + Add Player
+    </a>
+    <a href="{{ url_for('players.upload_players') }}" class="btn btn-outline-primary">
+      <i class="bi bi-upload"></i> Upload CSV
+    </a>
+  </div>
+
+  {% if current_user.role.role != "Coach" %}
+    <form method="GET" class="row g-2 align-items-end mb-3">
+      <div class="col-auto">
+        <label for="schoolSelect" class="form-label mb-0">Filter by School:</label>
+        <select id="schoolSelect" name="school_id" class="form-select">
+          <option value="">All Schools</option>
+          {% for school in schools %}
+            <option value="{{ school.id }}" {% if school.id == selected_school_id %}selected{% endif %}>
+              {{ school.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-outline-secondary">Filter</button>
+      </div>
+    </form>
+  {% endif %}
 
   {% if players %}
   <table class="table table-hover">

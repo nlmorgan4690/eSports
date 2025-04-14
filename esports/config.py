@@ -14,5 +14,6 @@ class Config:
     DUO_SKEY= os.environ.get('DUO_SKEY')
     DUO_HOST = os.environ.get('DUO_HOST')
     DUO_AKEY = os.environ.get('DUO_AKEY')
+    FERNET_KEY = os.environ.get("FERNET_KEY")
 
     # print (DUO_AKEY)

@@ -99,15 +99,25 @@ class Game(db.Model):
 class Player(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    # username = db.Column(db.String(20), unique=True, nullable=False)
-    # password = db.Column(db.String(60), nullable=False)
     date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     school_id = db.Column(db.Integer, db.ForeignKey('school.id'), nullable=False)
     game_id = db.Column(db.Integer, db.ForeignKey('game.id'), nullable=True)
     team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=True)
+    ad_username = db.Column(db.String(64), unique=True)
+    _ad_passphrase = db.Column("ad_passphrase", db.Text)  # Encrypted storage
 
     games = db.relationship('PlayerGame', back_populates='player')
     teams = db.relationship('PlayerTeam', backref='player', lazy=True)
+
+    @property
+    def ad_passphrase(self):
+        from esports.players.fernet import decrypt_string
+        return decrypt_string(self._ad_passphrase) if self._ad_passphrase else None
+
+    @ad_passphrase.setter
+    def ad_passphrase(self, value):
+        from esports.players.fernet import encrypt_string
+        self._ad_passphrase = encrypt_string(value)
 
     def __repr__(self):
         return f"Player('{self.name}')"

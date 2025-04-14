@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Upload Player CSV</h2>
+
+  <p>
+    Download the template:
+    <a href="{{ url_for('static', filename='csv_templates/player_upload_template.csv') }}" class="btn btn-outline-secondary btn-sm">
+      Download CSV Template
+    </a>
+  </p>
+
+  <div class="mb-4">
+    <h5>📄 CSV Format Example:</h5>
+    <p>The CSV file should contain one email address per line. No header row is required.</p>
+    <div class="table-responsive">
+      <table class="table table-bordered table-sm w-auto">
+        <tbody>
+          <tr><td>player1@example.com</td></tr>
+          <tr><td>player2@example.com</td></tr>
+          <tr><td>player3@example.com</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <form method="POST" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    <div class="mb-3">
+      {{ form.csv_file.label(class="form-label") }}
+      {{ form.csv_file(class="form-control") }}
+    </div>
+    {{ form.submit(class="btn btn-primary") }}
+    <a href="{{ url_for('players.players_dashboard') }}" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+{% endblock %}
