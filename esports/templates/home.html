@@ -1,6 +1,31 @@
 {% extends "layout.html" %}
 {% block content %}
 
+{% if current_user.is_authenticated %}
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <a href="{{ url_for('main.pre_season_checklist') }}" class="text-decoration-none">
+        <div class="card text-white bg-secondary shadow-sm h-100">
+          <div class="card-body text-center">
+            <h4 class="card-title">Pre-Season Checklist</h4>
+            <p class="card-text">Review all pre-season setup tasks.</p>
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-6">
+      <a href="{{ url_for('main.pre_game_checklist') }}" class="text-decoration-none">
+        <div class="card text-white bg-secondary shadow-sm h-100">
+          <div class="card-body text-center">
+            <h4 class="card-title">Pre-Game Checklist</h4>
+            <p class="card-text">Complete the game day readiness checklist.</p>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+{% endif %}
+
 {# Outer row: g-0 removes gutters, mb-5 adds margin below, align-items-stretch makes columns attempt equal height #}
 <div class="row g-0 mb-5 align-items-stretch">
   <div class="col-md-5 p-0"> {# Or adjust split. p-0 ensures no padding in this column. #}

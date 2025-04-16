@@ -106,3 +106,20 @@ body {
   box-shadow: 0 0 5px rgba(0,0,0,0.3);
 }
 
+/* Light grey background for dropdown */
+.dropdown-menu.custom-grey {
+  background-color: #6c757d; /* Bootstrap's light grey */
+  border: none; /* Optional: cleaner look */
+}
+
+/* Make dropdown text match navbar links */
+.dropdown-menu.custom-grey .dropdown-item {
+  color: #fff; /* Match "Account" and "Logout" text color */
+  background-color: transparent;
+}
+
+/* Optional: change on hover */
+.dropdown-menu.custom-grey .dropdown-item:hover {
+  background-color: #fff; /* Bootstrap's dark grey */
+  color: #6c757d;
+}

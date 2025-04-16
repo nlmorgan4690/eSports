@@ -15,3 +15,11 @@ def home():
 @main.route("/about")
 def about():
     return render_template('about.html', title='About')
+
+@main.route('/preseason-checklist')
+def pre_season_checklist():
+    return render_template('main/pre_season_checklist.html')
+
+@main.route('/pregame-checklist')
+def pre_game_checklist():
+    return render_template('main/pre_game_checklist.html')
