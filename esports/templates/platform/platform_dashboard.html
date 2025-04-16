@@ -1,0 +1,87 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">Platform Dashboard</h2>
+
+  <div class="row">
+    <div class="col-md-5">
+      <div class="card mb-4">
+        <div class="card-header">Add New Platform</div>
+        <div class="card-body">
+          <form method="POST" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+
+            <div class="mb-3">
+              {{ form.device_type.label(class="form-label") }}
+              {{ form.device_type(class="form-control") }}
+            </div>
+
+            <div class="mb-3">
+              {{ form.platform_icon.label(class="form-label") }}
+              {{ form.platform_icon(class="form-control") }}
+            </div>
+
+            <button type="submit" class="btn btn-success">{{ form.submit.label.text }}</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-7">
+      <div class="card">
+        <div class="card-header">Registered Platforms</div>
+        <div class="card-body">
+          {% if platforms %}
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Icon</th>
+                  <th>Device Type</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for platform in platforms %}
+                  <tr>
+                    <td><img src="{{ platform.platform_icon }}" alt="icon" width="32" height="32"></td>
+                    <td>{{ platform.device_type }}</td>
+                    <td>
+                      <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deletePlatformModal{{ platform.id }}">
+                        Delete
+                      </button>
+
+                      <!-- Delete Modal -->
+                      <div class="modal fade" id="deletePlatformModal{{ platform.id }}" tabindex="-1" aria-labelledby="deletePlatformLabel{{ platform.id }}" aria-hidden="true">
+                        <div class="modal-dialog">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <h5 class="modal-title" id="deletePlatformLabel{{ platform.id }}">Confirm Deletion</h5>
+                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                              Are you sure you want to delete the platform <strong>{{ platform.device_type }}</strong>?
+                            </div>
+                            <div class="modal-footer">
+                                <form method="POST" action="{{ url_for('platforms.delete', platform_id=platform.id) }}">
+                                    {{ delete_form.hidden_tag() }}
+                                    {{ delete_form.submit(class="btn btn-danger") }}
+                                  </form>
+                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <p class="text-muted">No platforms defined yet.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

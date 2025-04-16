@@ -36,6 +36,7 @@ def create_app(config_class=Config):
     from esports.devices.routes import devices
     from esports.games.routes import games
     from esports.players.routes import players
+    from esports.platform.routes import platforms
     app.register_blueprint(users)
     app.register_blueprint(posts)
     app.register_blueprint(main)
@@ -45,5 +46,6 @@ def create_app(config_class=Config):
     app.register_blueprint(devices)
     app.register_blueprint(games)
     app.register_blueprint(players)
+    app.register_blueprint(platforms)
 
     return app

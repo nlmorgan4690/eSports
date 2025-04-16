@@ -1,0 +1,38 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">Add New Device</h2>
+  <a href="{{ url_for('devices.dashboard') }}" class="btn btn-secondary mb-3">&larr; Back to Dashboard</a>
+
+  <div class="card">
+    <div class="card-body">
+      <form method="POST">
+        {{ form.hidden_tag() }}
+
+        <div class="mb-3">
+          {{ form.device_name.label(class="form-label") }}
+          {{ form.device_name(class="form-control") }}
+        </div>
+
+        <div class="mb-3">
+          {{ form.device_mac.label(class="form-label") }}
+          {{ form.device_mac(class="form-control") }}
+        </div>
+
+        <div class="mb-3">
+          {{ form.platform.label(class="form-label") }}
+          {{ form.platform(class="form-select") }}
+        </div>
+        {% if current_user.role.role == "Admin" %}
+        <div class="mb-3">
+          {{ form.school.label(class="form-label") }}
+          {{ form.school(class="form-select") }}
+        </div>
+        {% endif %}
+
+        <button type="submit" class="btn btn-success">{{ form.submit.label.text }}</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

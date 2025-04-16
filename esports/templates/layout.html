@@ -29,7 +29,7 @@
             <a class="nav-item nav-link" href="{{ url_for('main.about') }}">About</a>
             {% if current_user.is_authenticated %}
               <a class="nav-item nav-link" href="{{ url_for('players.players_dashboard') }}">Roster</a>
-              <a class="nav-item nav-link" href="{{ url_for('main.home') }}">Devices</a>
+              <a class="nav-item nav-link" href="{{ url_for('devices.dashboard') }}">Devices</a>
             {% endif %}
           </div>
 
@@ -40,6 +40,7 @@
               <a class="nav-item nav-link" href="{{ url_for('team.team_dashboard') }}">Teams</a>
               <a class="nav-item nav-link" href="{{ url_for('users.user_dashboard') }}">Users</a>
               <a class="nav-item nav-link" href="{{ url_for('games.games_dashboard') }}">Games</a>
+              <a class="nav-item nav-link" href="{{ url_for('platforms.platform_dashboard') }}">Platforms</a>
               <a class="nav-item nav-link" href="{{ url_for('users.account') }}">Account</a>
               <a class="nav-item nav-link" href="{{ url_for('users.logout') }}">Logout</a>
             {% else %}

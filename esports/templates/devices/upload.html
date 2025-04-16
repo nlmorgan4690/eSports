@@ -1,0 +1,40 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Upload Devices CSV</h2>
+
+  <p>
+    Download template:
+    <a href="{{ url_for('static', filename='csv_templates/device_upload_template.csv') }}" class="btn btn-outline-secondary btn-sm">
+      Download CSV Template
+    </a>
+  </p>
+
+  <div class="mb-4">
+    <h5>Platform Names:</h5>
+    <ul>
+      {% for p in platforms %}
+        <li>{{ p.device_type }}</li>
+      {% endfor %}
+    </ul>
+    {% if current_user.role.role != "Coach" %}
+    <h5>School Names:</h5>
+    <ul>
+      {% for s in schools %}
+        <li>{{ s.name }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+
+  <form method="POST" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    <div class="mb-3">
+      {{ form.csv_file.label(class="form-label") }}
+      {{ form.csv_file(class="form-control") }}
+    </div>
+    {{ form.submit(class="btn btn-primary") }}
+    <a href="{{ url_for('devices.dashboard') }}" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+{% endblock %}

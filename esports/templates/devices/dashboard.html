@@ -1,0 +1,75 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container mt-4">
+  <div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+      <h2 class="mb-0">Device Dashboard</h2>
+      <div class="d-flex gap-2">
+        <a href="{{ url_for('devices.add_device') }}" class="btn btn-primary">
+          + Add Device
+        </a>
+        <a href="{{ url_for('devices.upload_devices') }}" class="btn btn-outline-primary">
+          <i class="bi bi-upload"></i> Upload CSV
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">Registered Devices</div>
+    <div class="card-body">
+      {% if devices %}
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>MAC Address</th>
+              <th>Platform</th>
+              <th>Date Added</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for device in devices %}
+              <tr>
+                <td>{{ device.device_name }}</td>
+                <td>{{ device.device_mac }}</td>
+                <td>{{ device.platform.device_type }}</td>
+                <td>{{ device.date_added.strftime('%Y-%m-%d') }}</td>
+                <td>
+                  <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ device.id }}">
+                    Delete
+                  </button>
+
+                  <!-- Delete Modal -->
+                  <div class="modal fade" id="deleteModal{{ device.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ device.id }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title" id="deleteModalLabel{{ device.id }}">Confirm Deletion</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                          Are you sure you want to delete <strong>{{ device.device_name }}</strong>?
+                        </div>
+                        <div class="modal-footer">
+                          <form method="POST" action="{{ url_for('devices.delete_device', device_id=device.id) }}">
+                            <button type="submit" class="btn btn-danger">Delete</button>
+                          </form>
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="text-muted">No devices registered yet.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
