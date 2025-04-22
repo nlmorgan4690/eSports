@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4 pb-5">
+    <h1 class="mb-4">Troubleshooting:</h1>
+
+    <div class="list-group">
+            <a href="{{ url_for('main.basic_tshoot') }}" class="list-group-item list-group-item-action">
+                <h4 class="mb-1 fw-semibold">Basic Network Troubleshooting</h4>
+                <p class="mb-1">Basic steps and info to collect for troubleshooting connetivity issues.</p>
+            </a>
+            <a href="{{ url_for('main.intermediate_tshoot') }}" class="list-group-item list-group-item-action">
+                <h4 class="mb-1 fw-semibold">Intermediate Network Troubleshooting</h4>
+                <p class="mb-1">Sligtly more invovled steps and info to collect for troubleshooting connetivity issues.</p>
+            </a>
+            <a href="{{ url_for('main.advanced_tshoot') }}" class="list-group-item list-group-item-action">
+                <h4 class="mb-1 fw-semibold">Advanced Network Troubleshooting</h4>
+                <p class="mb-1">More advanced steps and info to collect for troubleshooting connetivity issues.</p>
+            </a>
+    </div>
+</div>
+{% endblock content %}

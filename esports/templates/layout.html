@@ -25,10 +25,10 @@
 
         <div class="collapse navbar-collapse justify-content-between" id="navbarToggle">
           <div class="navbar-nav">
-            <a class="nav-item nav-link" href="{{ url_for('main.home') }}">Home</a>
-            <a class="nav-item nav-link" href="{{ url_for('main.about') }}">About</a>
+            <a class="nav-item nav-link" href="{{ url_for('main.info') }}">Knowledge Base</a>
             {% if current_user.is_authenticated %}
               <a class="nav-item nav-link" href="{{ url_for('players.players_dashboard') }}">Roster</a>
+              <a class="nav-item nav-link" href="{{ url_for('team.team_dashboard') }}">Teams</a>
               <a class="nav-item nav-link" href="{{ url_for('devices.dashboard') }}">Devices</a>
             {% endif %}
           </div>
@@ -41,7 +41,6 @@
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end custom-grey" aria-labelledby="adminDropdown">
                   <li><a class="dropdown-item" href="{{ url_for('schools.school_dashboard') }}">Schools</a></li>
-                  <li><a class="dropdown-item" href="{{ url_for('team.team_dashboard') }}">Teams</a></li>
                   <li><a class="dropdown-item" href="{{ url_for('users.user_dashboard') }}">Users</a></li>
                   <li><a class="dropdown-item" href="{{ url_for('games.games_dashboard') }}">Games</a></li>
                   <li><a class="dropdown-item" href="{{ url_for('platforms.platform_dashboard') }}">Platforms</a></li>
@@ -86,11 +85,12 @@
             <li class="list-group-item">Calendars</li>
             <li class="list-group-item">Code of Conduct</li>
             <li class="list-group-item">Release Forms</li>
-            <li class="list-group-item"><a target="_blank" href="{{ url_for('main.pre_season_checklist') }}" >Pre Season Check List</a></li>
-            <li class="list-group-item"><a target="_blank" href="{{ url_for('main.pre_game_checklist') }}" >Pre Game Chek List</a></li>
-            <li class="list-group-item">Trouble Shooting</li>
-            <li class="list-group-item">Get Help</li>
-
+            {% if current_user.is_authenticated %}
+              <li class="list-group-item"><a href="{{ url_for('main.pre_season_checklist') }}" >Pre Season Checklist</a></li>
+              <li class="list-group-item"><a href="{{ url_for('main.pre_game_checklist') }}" >Pre Game Cheklist</a></li>
+              <li class="list-group-item"><a href="{{ url_for('main.troubleshooting') }}" >Trouble Shooting</a></li>
+              <li class="list-group-item">Get Help</li>
+            {% endif %}
           </ul>
         </div>
       </div>

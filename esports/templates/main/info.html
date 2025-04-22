@@ -1,0 +1,51 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4 pb-5">
+    <h1 class="mb-4">Esports Knowledge Base</h1>
+
+    <div class="list-group">
+        <a href="{{ url_for('main.esports_info') }}" class="list-group-item list-group-item-action">
+            <h4 class="mb-1 fw-semibold">Introduction to Esports in Schools</h4>
+            <p class="mb-1">Explore how esports are transforming student engagement, career readiness, and digital literacy in the K-12 space.</p>
+        </a>
+        {% if current_user.is_authenticated %}
+            <a href="{{ url_for('main.fw_ports') }}" class="list-group-item list-group-item-action">
+                <h4 class="mb-1 fw-semibold">Firewall Ports and Network Requirements</h4>
+                <p class="mb-1">A technical breakdown of all the required TCP/UDP ports for popular esports titles and platforms used in competitive play.</p>
+            </a>
+
+            <a href="{{ url_for('main.device_setup') }}" class="list-group-item list-group-item-action">
+                <h4 class="mb-1 fw-semibold">Classroom Device Setup Guide</h4>
+                <p class="mb-1">Step-by-step instructions to get your lab or classroom ready for competition — from wiring to MAB authentication.</p>
+            </a>
+
+            <a href="{{ url_for('main.cfaq') }}" class="list-group-item list-group-item-action">
+                <h4 class="mb-1 fw-semibold">Coach & Sponsor FAQ</h4>
+                <p class="mb-1">Common questions answered about scheduling, team creation, alternates, reporting, and school district policy.</p>
+            </a>
+
+            <a href="{{ url_for('main.pre_season_checklist') }}" class="list-group-item list-group-item-action">
+                <h4 class="mb-1 fw-semibold">Pre-Season Checklist</h4>
+                <p class="mb-1">What every coach should verify before the season starts — game access, device testing, coach credentials, and more.</p>
+            </a>
+
+            <a href="{{ url_for('main.pre_game_checklist') }}" class="list-group-item list-group-item-action">
+                <h4 class="mb-1 fw-semibold">Game Day Checklist</h4>
+                <p class="mb-1">Ensure your players and equipment are game-ready with this quick-access checklist for match day success.</p>
+            </a>
+            <a href="{{ url_for('main.basic_tshoot') }}" class="list-group-item list-group-item-action">
+                <h4 class="mb-1 fw-semibold">Basic Network Troubleshooting</h4>
+                <p class="mb-1">Basic steps and info to collect for troubleshooting connetivity issues.</p>
+            </a>
+            <a href="{{ url_for('main.intermediate_tshoot') }}" class="list-group-item list-group-item-action">
+                <h4 class="mb-1 fw-semibold">Intermediate Network Troubleshooting</h4>
+                <p class="mb-1">Sligtly more invovled steps and info to collect for troubleshooting connetivity issues.</p>
+            </a>
+            <a href="{{ url_for('main.advanced_tshoot') }}" class="list-group-item list-group-item-action">
+                <h4 class="mb-1 fw-semibold">Advanced Network Troubleshooting</h4>
+                <p class="mb-1">More advanced steps and info to collect for troubleshooting connetivity issues.</p>
+            </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock content %}
