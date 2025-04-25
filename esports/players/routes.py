@@ -5,7 +5,9 @@ from flask_login import login_user, current_user, logout_user, login_required
 from esports import db, bcrypt
 from esports.models import Player, School, Game, Team, Role
 from esports.players.forms import PlayerForm, DeleteForm, UploadCSVForm
-from esports.players.utils import generate_account
+from esports.players.utils import generate_account, sync_player_to_ad, user_exists_in_ad, provision_ad_account, delete_ad_account
+
+import logging
 
 players = Blueprint('players', __name__)
 
@@ -25,23 +27,39 @@ def add_player():
         email = form.email.data
         username, passphrase, hashed = generate_account(email)
 
-        # ✅ Check for duplicate AD username
+        logging.warning(f"Trying to add player: {email} -> {username}")
+
         if Player.query.filter_by(ad_username=username).first():
             flash(f"A player with the AD username '{username}' already exists.", "danger")
             return redirect(url_for('players.add_player'))
 
         player = Player(
-            name=email,  # still storing email in 'name'
+            name=email,
             school_id=form.school.data,
             ad_username=username,
             ad_passphrase=passphrase
         )
-
         db.session.add(player)
         db.session.commit()
 
-        flash(f"Player {username} added. Passphrase stored securely.", "success")
-        return redirect(url_for('players.view_players'))  # Adjust if needed
+        if form.sync_to_ad.data:
+            try:
+                logging.warning(f"Checking if {email} exists in AD...")
+
+                if user_exists_in_ad(username):
+                    sync_player_to_ad(player)
+                    flash("✅ Player synced to AD group.", "success")
+                else:
+                    logging.warning(f"{email} not found, provisioning...")
+
+                    provision_ad_account(username, passphrase, hashed)
+                    flash("✅ Player provisioned and added to AD group.", "success")
+            except Exception as e:
+                flash(f"❌ AD Sync/Provision failed: {str(e)}", "danger")
+                logging.error(f"Exception syncing/provisioning: {e}")
+
+        flash(f"✅ Player {username} added. Passphrase stored securely.", "success")
+        return redirect(url_for('players.players_dashboard'))
 
     return render_template("players/form.html", form=form, title="Add Player")
 
@@ -116,20 +134,28 @@ def edit_player(player_id):
     return render_template("players/form.html", form=form, delete_form=delete_form, title=f"Edit {player.name}", player=player)
 
 
+from esports.players.utils import delete_ad_account
+
 @players.route('/players/<int:player_id>/delete', methods=['POST'])
 @login_required
 def delete_player(player_id):
     player = Player.query.get_or_404(player_id)
 
-    # Optional: Coaches can only delete their own players
     if current_user.role.role == 'Coach' and player.school_id != current_user.school_id:
         flash("Access denied.", "danger")
         return redirect(url_for('players.players_dashboard'))
 
+    try:
+        delete_ad_account(player.ad_username)
+        flash(f"🗑️ AD user {player.ad_username} deleted.", "info")
+    except Exception as e:
+        flash(f"⚠️ Player deleted from app, but AD removal failed: {str(e)}", "warning")
+
     db.session.delete(player)
     db.session.commit()
-    flash("Player deleted.", "info")
+    flash("Player deleted from system.", "info")
     return redirect(url_for('players.players_dashboard'))
+
 
 @players.route("/players/upload", methods=["GET", "POST"])
 @login_required
@@ -147,6 +173,7 @@ def upload_players():
 
         added = 0
         skipped = []
+        errors = []
 
         for row in reader:
             if not row:
@@ -172,7 +199,7 @@ def upload_players():
                 skipped.append((email, "Username exists"))
                 continue
 
-            # Add player
+            # Add player to database
             player = Player(
                 name=email,
                 school_id=current_user.school_id,
@@ -180,15 +207,68 @@ def upload_players():
                 ad_passphrase=passphrase
             )
             db.session.add(player)
-            added += 1
+            db.session.flush()  # Don't fully commit yet, so we can rollback if needed
+
+            # Try to sync/provision AD account
+            try:
+                if user_exists_in_ad(username):
+                    sync_player_to_ad(player)
+                else:
+                    provision_ad_account(username, passphrase, hashed)
+                added += 1
+
+            except Exception as e:
+                db.session.rollback()
+                skipped.append((email, "AD error"))
+                errors.append((email, str(e)))
+                continue
 
         db.session.commit()
-        flash(f"✅ {added} players added. ❌ {len(skipped)} skipped.", "info")
+        
+        flash(f"✅ {added} players added and synced/provisioned. ❌ {len(skipped)} skipped.", "info")
 
         if skipped:
             for email, reason in skipped:
                 flash(f"Skipped {email} — {reason}", "warning")
 
+        if errors:
+            for email, err in errors:
+                flash(f"Error for {email}: {err}", "danger")
+
         return redirect(url_for("players.players_dashboard"))
 
     return render_template("players/upload.html", form=form)
+
+
+
+@players.route("/players/<int:player_id>/sync", methods=["POST"])
+@login_required
+def sync_player(player_id):
+    player = Player.query.get_or_404(player_id)
+
+    try:
+        if user_exists_in_ad(player.ad_username):
+            sync_player_to_ad(player)
+            flash(f"✅ {player.name} synced to Active Directory.", "success")
+        else:
+            # 🧠 Recreate the hashed password from stored plaintext passphrase
+            if not player.ad_passphrase:
+                flash("❌ Cannot provision — missing stored passphrase.", "danger")
+                return redirect(url_for("players.view_player", player_id=player.id))
+
+            passphrase = player.ad_passphrase
+            hashed_pass = ('"%s"' % passphrase).encode('utf-16-le')
+
+            provision_ad_account(player.ad_username, passphrase, hashed_pass)
+            flash(f"✅ {player.name} provisioned and added to AD.", "success")
+
+        player.ad_synced = True
+        db.session.commit()
+
+    except Exception as e:
+        player.ad_synced = False
+        db.session.commit()
+        flash(f"❌ Failed to sync {player.name} to AD: {str(e)}", "danger")
+
+    return redirect(url_for("players.view_player", player_id=player.id))
+

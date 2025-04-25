@@ -1,9 +1,19 @@
 import ldap3, random, csv, os
-from ldap3.core.exceptions import LDAPChangeError
+from ldap3.core.exceptions import LDAPChangeError, LDAPBindError, LDAPException
 from ldap3.utils.conv import to_unicode
+from flask import current_app
 import random
+import logging
 
 from ldap3.utils.conv import to_unicode
+
+logger = logging.getLogger(__name__)
+
+def get_user_dn(username: str) -> str:
+    template = os.environ.get("AD_USER_DN_TEMPLATE")
+    if not template:
+        raise ValueError("❌ Environment variable AD_USER_DN_TEMPLATE is not set.")
+    return template.format(username=username)
 
 def generate_account(email: str) -> tuple[str, str, bytes]:
     """
@@ -41,9 +51,10 @@ def provision_ad_account(username: str, passphrase: str, hashed_pass: bytes):
         auto_bind=True
     )
 
-    user_dn = f'CN={username},OU=eSports User Accounts,OU=Network Access and Managment,OU=District Groups,OU=Administrative Area,DC=dcsdk12,DC=org'
-    group_dn = 'CN=802.1x-eSports,OU=Network Security Roles,OU=Network Access and Managment,OU=District Groups,OU=Administrative Area,DC=dcsdk12,DC=org'
 
+    user_dn = get_user_dn(username)
+    group_dn = current_app.config['AD_GROUP_DN']
+    
     attributes = {
         'sAMAccountName': username,
         'userPrincipalName': username + '@dcsdk12.org',
@@ -68,6 +79,113 @@ def provision_ad_account(username: str, passphrase: str, hashed_pass: bytes):
         print(f"LDAPChangeError: {e}")
     finally:
         conn.unbind()
+
+def sync_player_to_ad(player):
+    """
+    Sync a player to Active Directory by adding them to a specific group.
+    Uses the player's email to construct their AD username (UPN format).
+    """
+    try:
+        # Load configuration from Flask app config
+        server_uri = current_app.config["AD_SERVER"]
+        bind_user = current_app.config["AD_USER"]
+        bind_password = current_app.config["AD_PASS"]
+        base_dn = current_app.config["AD_BASE_DN"]
+        group_dn = current_app.config["AD_GROUP_DN"]
+
+        server = ldap3.Server(server_uri, get_info=ldap3.ALL)
+        conn = ldap3.Connection(server, user=bind_user, password=bind_password, auto_bind=True)
+
+        # Construct user UPN from email (e.g., user@domain.local)
+        # user_upn = player.email.strip().lower()
+        user_upn = player.name.strip().lower()
+
+
+        # Find DN of the user based on UPN
+        conn.search(
+            search_base=base_dn,
+            search_filter=f"(userPrincipalName={user_upn})",
+            attributes=['distinguishedName']
+        )
+
+        if not conn.entries:
+            raise ValueError(f"No AD user found for {user_upn}")
+
+        user_dn = conn.entries[0].distinguishedName.value
+
+        # Add user to the group
+        conn.modify(
+            group_dn,
+            {'member': [(ldap3.MODIFY_ADD, [user_dn])]}
+        )
+
+        if conn.result['result'] == 0:
+            logger.info(f"✅ Successfully synced {user_upn} to AD group.")
+        else:
+            logger.warning(f"⚠️ Failed to sync {user_upn}: {conn.result}")
+
+        conn.unbind()
+
+    except Exception as e:
+        logger.error(f"❌ AD sync failed for {user_upn}: {e}")
+        raise
+
+
+def user_exists_in_ad(username):
+    """
+    Check if a user with the given esports AD username exists in Active Directory.
+    """
+    try:
+        server_uri = current_app.config["AD_SERVER"]
+        bind_user = current_app.config["AD_USER"]
+        bind_password = current_app.config["AD_PASS"]
+        base_dn = current_app.config["AD_BASE_DN"]
+        user_upn = f"{username}@dcsdk12.org"  # Constructed from esports username
+
+        server = ldap3.Server(server_uri)
+        conn = ldap3.Connection(server, user=bind_user, password=bind_password, auto_bind=True)
+
+        conn.search(
+            search_base=base_dn,
+            search_filter=f"(userPrincipalName={user_upn})",
+            attributes=['distinguishedName']
+        )
+
+        exists = bool(conn.entries)
+        conn.unbind()
+        return exists
+
+    except (LDAPBindError, LDAPException) as e:
+        logger.error(f"LDAP error checking existence of {username}: {e}")
+        raise
+
+
+def delete_ad_account(username: str):
+    """
+    Delete an Active Directory user account based on the provided username.
+    """
+    try:
+        server = ldap3.Server(os.environ.get("AD_SERVER"))
+        conn = ldap3.Connection(
+            server,
+            os.environ.get("AD_USER"),
+            os.environ.get("AD_PASS"),
+            auto_bind=True
+        )
+
+        user_dn = get_user_dn(username)
+
+        if conn.delete(user_dn):
+            print(f"🗑️ AD user {username} deleted.")
+        else:
+            print(f"❌ Failed to delete {username} from AD: {conn.result['description']}")
+
+        conn.unbind()
+
+    except Exception as e:
+        logger.error(f"❌ AD delete failed for {username}: {e}")
+        raise
+
 
 # def Esports_User_Acct (output_file):
 #     # Define the LDAP server connection

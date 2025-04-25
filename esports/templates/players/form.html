@@ -12,6 +12,12 @@
       {{ form.school.label(class="form-label") }}
       {{ form.school(class="form-select") }}
     </div>
+    <div class="form-check mb-3">
+      {{ form.sync_to_ad(class="form-check-input", id="sync_to_ad") }}
+      <label class="form-check-label" for="sync_to_ad">
+        {{ form.sync_to_ad.label.text }}
+      </label>
+    </div>
     <button type="submit" class="btn btn-success">{{ form.submit.label.text }}</button>
     <a href="{{ url_for('players.players_dashboard') }}" class="btn btn-secondary">Cancel</a>
 

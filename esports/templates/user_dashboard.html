@@ -22,7 +22,8 @@
             </span>
         </div>
         <div class="d-flex gap-2">
-            <a href="#" class="btn btn-sm btn-outline-primary disabled" tabindex="-1" aria-disabled="true" title="Coming soon">View Profile</a>
+          <a href="{{ url_for('users.edit_user', user_id=user.id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+          <a href="{{ url_for('users.view_user', user_id=user.id) }}" class="btn btn-outline-info btn-sm">View Profile</a>
             <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal{{ user.id }}">Delete</button>
         </div>
       </div>

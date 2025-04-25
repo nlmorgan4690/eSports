@@ -1,9 +1,10 @@
 from flask import render_template, url_for, flash, session, redirect, request, Blueprint, current_app
 from flask_login import login_user, current_user, logout_user, login_required
 from esports import db, bcrypt
-from esports.models import User, Post, Role
+from esports.models import User, Post, Role, School
 from esports.users.forms import (RegistrationForm, LoginForm, UpdateAccountForm,
-                                   RequestResetForm, ResetPasswordForm, DeleteForm)
+                                   RequestResetForm, ResetPasswordForm, DeleteForm,
+                                   ChangePasswordForm)
 from esports.users.utils import save_picture, send_reset_email
 from esports.users.duo_utils import send_duo_push_async
 
@@ -14,15 +15,30 @@ users = Blueprint('users', __name__)
 def register():
     if current_user.is_authenticated and current_user.role.role != "Admin":
         return redirect(url_for('main.home'))
+
     form = RegistrationForm()
+
     if form.validate_on_submit():
+        role_obj = Role.query.get(form.role.data)
+        school_id = form.school.data if role_obj.role == "Coach" else None
+
+        if role_obj.role == "Coach" and (not school_id or school_id == 0):
+            flash('You must select a school for a coach.', 'danger')
+            return render_template('register.html', title='Register', form=form)
+
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        user = User(username=form.username.data, email=form.email.data, password=hashed_password, role_id=form.role.data)
+        user = User(username=form.username.data,
+                    email=form.email.data,
+                    password=hashed_password,
+                    role_id=form.role.data,
+                    school_id=school_id)
         db.session.add(user)
         db.session.commit()
         flash('Your account has been created! You are now able to log in', 'success')
         return redirect(url_for('users.login'))
+
     return render_template('register.html', title='Register', form=form)
+
 
 @users.route("/login", methods=['GET', 'POST'])
 def login():
@@ -180,3 +196,65 @@ def reset_token(token):
         flash('Your password has been updated! You are now able to log in', 'success')
         return redirect(url_for('users.login'))
     return render_template('reset_token.html', title='Reset Password', form=form)
+
+@users.route("/user/<int:user_id>/view")
+@login_required
+def view_user(user_id):
+    user = User.query.get_or_404(user_id)
+    return render_template("users/view_user.html", user=user)
+
+@users.route("/account/change_password", methods=['GET', 'POST'])
+@login_required
+def change_password():
+    form = ChangePasswordForm()
+    if form.validate_on_submit():
+        if bcrypt.check_password_hash(current_user.password, form.current_password.data):
+            new_hash = bcrypt.generate_password_hash(form.new_password.data).decode('utf-8')
+            current_user.password = new_hash
+            db.session.commit()
+            flash('Your password has been updated.', 'success')
+            return redirect(url_for('users.account'))
+        else:
+            flash('Incorrect current password.', 'danger')
+    return render_template('users/change_password.html', form=form)
+
+@users.route("/user/<int:user_id>/edit", methods=['GET', 'POST'])
+@login_required
+def edit_user(user_id):
+    user = User.query.get_or_404(user_id)
+    form = RegistrationForm()  # <-- No obj=user here
+
+    # Populate original values for uniqueness validation
+    form._original_username = user.username
+    form._original_email = user.email
+
+    form.role.choices = [(r.id, r.role) for r in Role.query.order_by(Role.role).all()]
+    form.school.choices = [(0, 'Select a School')] + [(s.id, s.name) for s in School.query.order_by(School.name).all()]
+
+    if form.validate_on_submit():
+        user.username = form.username.data
+        user.email = form.email.data
+        user.role_id = form.role.data
+
+        school_val = int(form.school.data)
+        user.school_id = school_val if school_val != 0 else None
+
+        if form.password.data:
+            user.password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+
+        db.session.commit()
+        flash('User updated successfully.', 'success')
+        return redirect(url_for('users.user_dashboard'))
+
+    else:
+        print("🚫 Form errors:", form.errors)
+
+    # Prepopulate only safe fields
+    form.username.data = user.username
+    form.email.data = user.email
+    form.role.data = user.role_id
+    form.school.data = user.school_id or 0
+    form.password.data = ''
+    form.confirm_password.data = ''
+
+    return render_template('users/edit_user.html', form=form, user=user)

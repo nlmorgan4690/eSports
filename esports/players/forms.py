@@ -7,6 +7,7 @@ from wtforms.validators import DataRequired, Optional, EqualTo, Email
 class PlayerForm(FlaskForm):
     email = StringField("Player Email", validators=[DataRequired(), Email()])
     school = SelectField("School", coerce=int, validators=[DataRequired()])
+    sync_to_ad = BooleanField("Sync to Active Directory")
     submit = SubmitField("Save Player")
 
 class DeleteForm(FlaskForm):

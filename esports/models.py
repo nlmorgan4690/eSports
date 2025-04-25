@@ -23,10 +23,8 @@ class User(db.Model, UserMixin):
     posts = db.relationship('Post', backref='author', lazy=True)
     teams_coached = db.relationship('Team', backref='coach', lazy=True)
 
+    school = db.relationship('School', backref='users', foreign_keys=[school_id])
 
-    @property
-    def school(self):
-        return School.query.filter_by(coach_id=self.id).first()
 
     def get_reset_token(self, expires_sec=1800):
         s = Serializer(current_app.config['SECRET_KEY'], expires_sec)
@@ -104,10 +102,11 @@ class Player(db.Model):
     game_id = db.Column(db.Integer, db.ForeignKey('game.id'), nullable=True)
     team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=True)
     ad_username = db.Column(db.String(64), unique=True)
+    ad_synced = db.Column(db.Boolean, default=False)
     _ad_passphrase = db.Column("ad_passphrase", db.Text)  # Encrypted storage
 
     games = db.relationship('PlayerGame', back_populates='player')
-    teams = db.relationship('PlayerTeam', backref='player', lazy=True)
+    teams = db.relationship('PlayerTeam', backref='player', cascade="all, delete-orphan")
 
     @property
     def ad_passphrase(self):
@@ -167,6 +166,7 @@ class Device(db.Model):
     date_added = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     school_id = db.Column(db.Integer, db.ForeignKey('school.id'), nullable=False)
     platform_id = db.Column(db.Integer, db.ForeignKey('platform.id'), nullable=False)
+    ise_synced = db.Column(db.Boolean, default=False)
 
     def __repr__(self):
         return f"Device('{self.device_name}', '{self.device_mac}')"

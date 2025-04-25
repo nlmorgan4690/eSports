@@ -35,18 +35,19 @@
 
           <div class="navbar-nav ms-auto">
             {% if current_user.is_authenticated %}
-              <div class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  Admin Tools
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end custom-grey" aria-labelledby="adminDropdown">
-                  <li><a class="dropdown-item" href="{{ url_for('schools.school_dashboard') }}">Schools</a></li>
-                  <li><a class="dropdown-item" href="{{ url_for('users.user_dashboard') }}">Users</a></li>
-                  <li><a class="dropdown-item" href="{{ url_for('games.games_dashboard') }}">Games</a></li>
-                  <li><a class="dropdown-item" href="{{ url_for('platforms.platform_dashboard') }}">Platforms</a></li>
-                </ul>
-              </div>
-          
+              {% if current_user.is_authenticated and current_user.role.role == 'Admin' %}
+                <div class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Admin Tools
+                  </a>
+                  <ul class="dropdown-menu dropdown-menu-end custom-grey" aria-labelledby="adminDropdown">
+                    <li><a class="dropdown-item" href="{{ url_for('schools.school_dashboard') }}">Schools</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('users.user_dashboard') }}">Users</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('games.games_dashboard') }}">Games</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('platforms.platform_dashboard') }}">Platforms</a></li>
+                  </ul>
+                </div>
+              {% endif %}
               <a class="nav-item nav-link" href="{{ url_for('users.account') }}">Account</a>
               <a class="nav-item nav-link" href="{{ url_for('users.logout') }}">Logout</a>
             {% else %}

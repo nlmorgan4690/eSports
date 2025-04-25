@@ -26,7 +26,7 @@
                         {{ form.username(class="form-control form-control-lg") }}
                     {% endif %}
                 </div>
-                <div class="form-group">
+                <div class="form-group p-1">
                     {{ form.email.label(class="form-control-label") }}
                     {% if form.email.errors %}
                         {{ form.email(class="form-control form-control-lg is-invalid") }}
@@ -39,7 +39,7 @@
                         {{ form.email(class="form-control form-control-lg") }}
                     {% endif %}
                 </div>
-                <div class="form-group">
+                <div class="form-group p-3">
                     {{ form.picture.label() }}
                     {{ form.picture(class="form-control-file") }}
                     {% if form.picture.errors %}
@@ -49,9 +49,11 @@
                     {% endif %}
                 </div>
             </fieldset>
-            <div class="form-group">
+            <div class="form-group d-flex justify-content-between mt-3">
+                <a href="{{ url_for('users.change_password') }}" class="btn btn-warning">Change Password</a>
                 {{ form.submit(class="btn btn-outline-info") }}
-            </div>
+              </div>
+              
         </form>
     </div>
 {% endblock content %}

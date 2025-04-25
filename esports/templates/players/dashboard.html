@@ -37,8 +37,7 @@
       <tr>
         <th>Name</th>
         <th>School</th>
-        <th>Game</th>
-        <th>Team</th>
+        <th class="text-end">AD Sync</th>
         <th class="text-end">Actions</th>
       </tr>
     </thead>
@@ -47,15 +46,42 @@
       <tr>
         <td><a href="{{ url_for('players.view_player', player_id=player.id) }}">{{ player.name }}</a></td>
         <td>{{ player.school.name }}</td>
-        <td>{{ player.game.name if player.game else 'Unassigned' }}</td>
-        <td>{{ player.team.name if player.team else "Unassigned" }}</td>
         <td class="text-end">
-          <a href="{{ url_for('players.view_player', player_id=player.id) }}" class="btn btn-sm btn-outline-info">View</a>
-          <a href="{{ url_for('players.edit_player', player_id=player.id) }}" class="btn btn-warning btn-sm">Edit</a>
-          <form method="POST" action="{{ url_for('players.delete_player', player_id=player.id) }}" style="display:inline;">
-            {{ form.hidden_tag() }}
-            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this player?');">Delete</button>
-          </form>
+          {% if player.ad_synced %}
+            <span class="btn btn-outline-success btn-sm disabled rounded-pill">✅ Synced</span>
+          {% else %}
+            <span class="btn btn-outline-warning btn-sm disabled text-dark rounded-pill">⚠️ Needs Sync</span>
+          {% endif %}
+        </td>
+        <td class="text-end">
+          <div class="d-flex justify-content-end flex-wrap gap-1">
+            <a href="{{ url_for('players.view_player', player_id=player.id) }}" class="btn btn-sm btn-outline-info">View</a>
+            <form method="POST" action="{{ url_for('players.sync_player', player_id=player.id) }}">
+              {{ form.hidden_tag() }}
+              <button type="submit" class="btn btn-sm btn-outline-primary">Sync</button>
+            </form>
+            <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ player.id }}">Delete</button>
+            <div class="modal fade" id="deleteModal{{ player.id }}" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    Are you sure you want to delete {{ player.name }}?
+                  </div>
+                  <div class="modal-footer">
+                    <form method="POST" action="{{ url_for('players.delete_player', player_id=player.id) }}">
+                      {{ form.hidden_tag() }}
+                      <button type="submit" class="btn btn-danger">Delete</button>
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+        </div>  
         </td>
       </tr>
       {% endfor %}
