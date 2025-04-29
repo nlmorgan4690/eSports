@@ -167,6 +167,7 @@ class Device(db.Model):
     school_id = db.Column(db.Integer, db.ForeignKey('school.id'), nullable=False)
     platform_id = db.Column(db.Integer, db.ForeignKey('platform.id'), nullable=False)
     ise_synced = db.Column(db.Boolean, default=False)
+    is_wireless = db.Column(db.Boolean, default=False)
 
     def __repr__(self):
         return f"Device('{self.device_name}', '{self.device_mac}')"

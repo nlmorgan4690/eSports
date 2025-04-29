@@ -4,17 +4,22 @@
 # correct this will add the device to the proper esports wireless or 
 # wired MAB (MAC address bypass list) in ISE.
 '''
-import os, subprocess, json
+import os, subprocess, json, csv, requests
+from flask import current_app
+from esports.models import Device
+from datetime import datetime
+from urllib.parse import quote
+
 
 def Esports_ISE_MAB(output_file,timestamp):
     ## with open(output_file, 'r') as csv_file:
         ## csv_reader = csv.reader(csv_file)
-    iseUser = os.environ.get('ISE_USERNAME')
-    isePass = os.environ.get('ISE_PASSWORD')
-    iseBase = os.environ.get('ISE_BASE')
+    iseUser = current_app.config['ISE_API_USER']
+    isePass = current_app.config['ISE_API_PASSWORD']
+    iseBase = current_app.config['ISE_API_URL']
     csv_reader = output_file
-    wired = '58301c30-0612-11ee-bff4-de234da43ac2'
-    wireless = '7a5260c0-2fb1-11ee-bff4-de234da43ac2'
+    wired = current_app.config['ISE_WIRED']
+    wireless = current_app.config['ISE_WIRELESS']
     iseCreds = iseUser + ':' + isePass
     iseAddEndpoint = "https://" + iseBase + ":443/api/v1/endpoint/"
     iseGetEnpoint = "https://" + iseBase + ":9060/ers/config/endpoint/name/"
@@ -108,4 +113,159 @@ def Esports_ISE_MAB(output_file,timestamp):
                 message.append("ERROR: " + getEndpoint.stderr)
                 
     return(message)
+
+def sync_device_to_ise(device):
+    ise_api_url = current_app.config['ISE_BASE']
+    ise_username = current_app.config['ISE_USERNAME']
+    ise_password = current_app.config['ISE_PASSWORD']
+    ise_wired = current_app.config['ISE_WIRED']
+    ise_wireless = current_app.config['ISE_WIRELESS']
+
+    group_id = ise_wireless if device.is_wireless else ise_wired
+    mac_address = device.device_mac.lower()
+
+    get_headers = {
+        "Accept": "application/json"
+    }
+
+    post_put_headers = {
+        "Content-Type": "application/json"
+    }
+
+    # Build customAttributes
+    custom_attributes = {
+        "deviceType": device.platform.device_type if device.platform else "Unknown",
+        "school": device.school.name if device.school else "Unknown",
+        "coachEmail": "",  # Optional if you have it
+        "created": datetime.utcnow().isoformat()
+    }
+
+    # Build base payload
+    payload = {
+        "mac": mac_address,
+        "staticGroupAssignment": True,
+        "groupId": group_id,
+        "description": f"{device.device_name}",
+        "customAttributes": custom_attributes
+    }
+
+    # Try to GET the endpoint first
+    get_url = f"https://{ise_api_url}/api/v1/endpoint/name/{mac_address}"
+
+    get_response = requests.get(
+        get_url,
+        auth=(ise_username, ise_password),
+        headers=get_headers,  # 👈 Correct for GET
+        verify=False
+    )
+
+    if get_response.status_code == 200:
+        # Device exists -> PUT update
+        endpoint_id = get_response.json()['ERSEndPoint']['id']
+        put_url = f"https://{ise_api_url}/api/v1/endpoint/{endpoint_id}"
+
+
+        print("=== Payload being sent to Cisco ISE (PUT) ===")
+        print(payload)
+
+        response = requests.put(
+            put_url,
+            auth=(ise_username, ise_password),
+            headers=post_put_headers,  # 👈 Correct for PUT
+            json=payload,
+            verify=False
+        )
+
+        print("=== ISE Response Status Code ===")
+        print(response.status_code)
+        print("=== ISE Response Body ===")
+        print(response.text)
+
+    elif get_response.status_code == 404:
+        # Device not found -> POST create
+        post_url = f"https://{ise_api_url}/api/v1/endpoint"
+
+        print("=== Payload being sent to Cisco ISE (POST) ===")
+        print(payload)
+
+        response = requests.post(
+            post_url,
+            auth=(ise_username, ise_password),
+            headers=post_put_headers,  # 👈 Correct for POST
+            json=payload,
+            verify=False
+        )
+
+        print("=== ISE Response Status Code ===")
+        print(response.status_code)
+        print("=== ISE Response Body ===")
+        print(response.text)
+
+    else:
+        raise Exception(f"Failed to check if endpoint exists. Status {get_response.status_code}: {get_response.text}")
+
+    response.raise_for_status()
+
+    if response.content and response.headers.get('Content-Type', '').startswith('application/json'):
+        return response.json()
+    else:
+        return {"status": "success", "message": "Device synced or updated successfully"}
+
+
+def delete_device_from_ise(mac_address):
+    ise_api_url = current_app.config['ISE_BASE']
+    ise_username = current_app.config['ISE_USERNAME']
+    ise_password = current_app.config['ISE_PASSWORD']
+
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "ERS-Media-Type": "identity.endpoint.1.2"
+    }
+
+    mac_variants = [
+        mac_address.upper(),
+        mac_address.lower(),
+        mac_address.upper().replace(":", "-"),
+        mac_address.lower().replace(":", "-")
+    ]
+
+    for variant in mac_variants:
+        current_app.logger.info(f"Trying MAC search: {variant}") 
+        lookup_url = f"https://{ise_api_url}/ers/config/endpoint?filter=mac.EQ.{variant}"
+
+        response = requests.get(
+            lookup_url,
+            auth=(ise_username, ise_password),
+            headers=headers,
+            verify=False
+        )
+
+        if response.status_code == 200:
+            search_result = response.json()
+            if 'SearchResult' in search_result and search_result['SearchResult']['total'] > 0:
+                endpoint_id = search_result['SearchResult']['resources'][0]['id']
+                delete_url = f"https://{ise_api_url}/ers/config/endpoint/{endpoint_id}"
+
+                delete_response = requests.delete(
+                    delete_url,
+                    auth=(ise_username, ise_password),
+                    headers=headers,
+                    verify=False
+                )
+                delete_response.raise_for_status()
+                current_app.logger.info(f"✅ Successfully deleted device with MAC {variant} from ISE.")
+                return True
+        elif response.status_code == 404:
+            continue  # try next variant
+        else:
+            current_app.logger.error(f"❌ Failed during GET lookup for MAC {variant}: {response.text}")
+            continue
+
+    current_app.logger.warning(f"⚠ Device with MAC {mac_address} not found in ISE after all attempts.")
+    return False
+
+
+
+
 

@@ -1,3 +1,3 @@
-Device Name,Mac Address,Platform,School
-Nick's Switch,F4:26:79:CC:49:35,Switch,CHS
-Alienware,F0:9F:C2:1B:44:AA,Windows,LHS
+Device Name,Mac Address,Platform,School,Connection Type
+Nick's Switch,F4:26:79:CC:49:35,Switch,CHS,Wired
+Alienware,F0:9F:C2:1B:44:AA,Windows,LHS,Wireless

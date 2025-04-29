@@ -21,6 +21,8 @@ class Config:
     ISE_USERNAME = os.environ.get('ISE_USERNAME')
     ISE_PASSWORD = os.environ.get('ISE_PASSWORD')
     ISE_BASE = os.environ.get('ISE_BASE')
+    ISE_WIRELESS = os.environ.get('ISE_WIRELESS')
+    ISE_WIRED = os.environ.get('ISE_WIRED')
     AD_BASE_DN = os.environ.get('AD_BASE_DN')
     AD_USER_DN_TEMPLATE = os.environ.get('AD_USER_DN_TEMPLATE')
     AD_GROUP_DN = os.environ.get('AD_GROUP_DN')

@@ -22,13 +22,17 @@
         <div class="mb-3">
           {{ form.platform.label(class="form-label") }}
           {{ form.platform(class="form-select") }}
-        </div>
+        </div>      
         {% if current_user.role.role == "Admin" %}
         <div class="mb-3">
           {{ form.school.label(class="form-label") }}
           {{ form.school(class="form-select") }}
         </div>
         {% endif %}
+        <div class="form-check mb-3">
+          {{ form.is_wireless(class="form-check-input") }}
+          {{ form.is_wireless.label(class="form-check-label") }}
+        </div>  
 
         <button type="submit" class="btn btn-success">{{ form.submit.label.text }}</button>
       </form>

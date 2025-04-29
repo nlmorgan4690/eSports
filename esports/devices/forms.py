@@ -12,6 +12,7 @@ class DeviceForm(FlaskForm):
     ])
     platform = SelectField("Platform", coerce=int, validators=[DataRequired()])
     school = SelectField("School", coerce=int)  # Will be optional unless admin
+    is_wireless = BooleanField('Is Wireless?')
     submit = SubmitField("Register Device")
 
 

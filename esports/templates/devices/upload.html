@@ -17,6 +17,7 @@
         <li>{{ p.device_type }}</li>
       {% endfor %}
     </ul>
+
     {% if current_user.role.role != "Coach" %}
     <h5>School Names:</h5>
     <ul>
@@ -27,14 +28,32 @@
     {% endif %}
   </div>
 
-  <form method="POST" enctype="multipart/form-data">
-    {{ form.hidden_tag() }}
-    <div class="mb-3">
-      {{ form.csv_file.label(class="form-label") }}
-      {{ form.csv_file(class="form-control") }}
+  <div id="upload-form">
+    <form method="POST" enctype="multipart/form-data" onsubmit="showLoader()">
+      {{ form.hidden_tag() }}
+      <div class="mb-3">
+        {{ form.csv_file.label(class="form-label") }}
+        {{ form.csv_file(class="form-control") }}
+      </div>
+      {{ form.submit(class="btn btn-primary") }}
+      <a href="{{ url_for('devices.dashboard') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+  </div>
+
+  <!-- Fake Progress Bar -->
+  <div id="loader" class="mt-4" style="display: none;">
+    <p><strong>Uploading devices, please wait...</strong></p>
+    <div class="progress">
+      <div class="progress-bar progress-bar-striped progress-bar-animated"
+           role="progressbar" style="width: 100%;">Uploading...</div>
     </div>
-    {{ form.submit(class="btn btn-primary") }}
-    <a href="{{ url_for('devices.dashboard') }}" class="btn btn-secondary">Cancel</a>
-  </form>
+  </div>
 </div>
+
+<script>
+function showLoader() {
+  document.getElementById("upload-form").style.display = "none";
+  document.getElementById("loader").style.display = "block";
+}
+</script>
 {% endblock %}
