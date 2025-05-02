@@ -5,6 +5,7 @@ from flask_login import LoginManager
 from flask_mail import Mail
 from flask_migrate import Migrate
 from esports.config import Config
+from dotenv import load_dotenv
 
 
 db = SQLAlchemy()
@@ -18,6 +19,9 @@ mail = Mail()
 
 
 def create_app(config_class=Config):
+
+    load_dotenv(dotenv_path=".env")
+
     app = Flask(__name__)
     app.config.from_object(Config)
 

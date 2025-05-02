@@ -99,3 +99,16 @@
  2.  **Install the Let's Encrypt client**: Install the Certbot client on the server [27].
  3.  **Obtain an SSL certificate**: Use Certbot to obtain an SSL certificate for the domain [28].
  4.  **Configure auto-renewal**: Set up automatic renewal of the SSL certificate using a cron job [29].
+
+
+
+
+ # Encrypt .env
+python -c "
+from cryptography.fernet import Fernet;
+key = b'5tsAyKTq2JIiR3y8ZplU2Zy6jex6Saaa6YRxG9HgG18=';
+fernet = Fernet(key);
+data = open('.env', 'rb').read();
+enc = fernet.encrypt(data);
+open('.env.enc', 'wb').write(enc)
+"
